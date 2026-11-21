@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#171b20"><title>IMPERIUM — Living History</title>
+<style>
+:root{--bg:#171b20;--panel:#232a31;--panel2:#2b343d;--gold:#d4b16a;--text:#eee8d9;--muted:#aab1b6;--red:#a94a43;--green:#668b66}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px system-ui,Arial}header{padding:12px 14px;background:#101418;border-bottom:1px solid #4b4538;display:flex;justify-content:space-between;align-items:center;gap:8px;position:sticky;top:0;z-index:5}h1{font-size:17px;letter-spacing:2px;margin:0;color:var(--gold)}button,select,input{font:inherit;color:var(--text);background:var(--panel2);border:1px solid #59616a;border-radius:8px;padding:9px}button{cursor:pointer}button:active{filter:brightness(1.3)}.wrap{padding:10px;max-width:980px;margin:auto}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:9px}.stat,.panel{background:var(--panel);border:1px solid #3c444b;border-radius:10px;padding:10px}.stat small{display:block;color:var(--muted);font-size:11px}.stat b{font-size:17px;color:var(--gold)}.tabs{display:flex;gap:6px;overflow:auto;margin:8px 0}.tabs button{white-space:nowrap}.tabs .active{background:#655332;border-color:var(--gold)}#map{width:100%;height:330px;background:#687b69;border-radius:10px;border:1px solid #6d755f;display:block;touch-action:manipulation}.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:9px}.panel h2{font-size:14px;color:var(--gold);margin:0 0 8px}.province{padding:9px;border-bottom:1px solid #424a50;display:flex;justify-content:space-between;gap:8px;align-items:center}.province:last-child{border:0}.muted{color:var(--muted);font-size:12px}.actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.actions button{flex:1;min-width:110px}.primary{background:#67522e;border-color:#b99b5e}.danger{background:#633632}.good{color:#9bc79a}.bad{color:#e59a91}.log{height:130px;overflow:auto;font-size:12px;color:#c7c4ba;line-height:1.5}.row{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.row>*{flex:1;min-width:100px}label{font-size:12px;color:var(--muted);display:block;margin:7px 0 3px}.hidden{display:none}.bar{height:7px;background:#444;border-radius:8px;overflow:hidden;margin-top:4px}.bar i{display:block;height:100%;background:#b99b5e}.footer{color:#7e878e;font-size:11px;text-align:center;padding:15px}
+@media(max-width:650px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(4,1fr)}.stat{padding:7px}.stat b{font-size:14px}#map{height:280px}}
+</style></head>
+<body>
+<header><h1>IMPERIUM</h1><div class="row" style="flex:0 1 auto"><button id="saveTop">Kaydet</button><button id="nextTop" class="primary">Yılı ilerlet ▸</button></div></header>
+<div class="wrap">
+<div class="panel" style="margin-bottom:9px"><div class="row"><div><label>Başlangıç yılı</label><input id="yearInput" type="number" value="1389"></div><div><label>Medeniyet</label><select id="civ"><option>Osmanlı</option><option>Bizans</option><option>Fransa</option><option>İngiltere</option><option>Moğol İmparatorluğu</option><option>Mali</option><option>Ming Çin'i</option><option>Babür</option></select></div><div><label>Hükümdar</label><select id="ruler"><option>I. Bayezid</option><option>II. Mehmed</option><option>I. Süleyman</option></select></div></div></div>
+<div class="stats"><div class="stat"><small>Hazine</small><b id="gold">500</b></div><div class="stat"><small>Asker</small><b id="troops">12000</b></div><div class="stat"><small>İstikrar</small><b id="stability">72%</b></div><div class="stat"><small>Yıl</small><b id="year">1389</b></div></div>
+<div class="tabs"><button class="active" data-tab="maptab">Harita</button><button data-tab="armytab">Ordu & Kuşatma</button><button data-tab="diplotab">Diplomasi</button><button data-tab="admintab">Eyalet yönetimi</button><button data-tab="courttab">Saray & Hanedan</button></div>
+<section id="maptab">
+<canvas id="map" width="900" height="500"></canvas>
+<div class="grid" style="margin-top:9px"><div class="panel"><h2>Seçili bölge</h2><div id="selectedName">Bursa</div><div class="muted" id="selectedInfo">Bölgeyi haritadan seç.</div><div class="actions"><button class="primary" id="recruit">Asker topla (80)</button><button id="build">Tahkimat kur (100)</button></div></div><div class="panel"><h2>Devlet durumu</h2><div id="realmInfo">Osmanlı Devleti</div><p class="muted">Bölgeleri seçerek yönetebilir, ordulara emir verebilir ve komşularla ilişkileri değiştirebilirsin.</p></div></div>
+</section>
+<section id="armytab" class="hidden"><div class="grid"><div class="panel"><h2>Sefer ordusu</h2><div id="armyInfo"></div><label>Hedef bölge</label><select id="armyTarget"></select><div class="actions"><button class="primary" id="march">Yürüyüş emri ver</button><button id="siege">Kuşatma başlat</button><button id="assault" class="danger">Hücum et</button></div></div><div class="panel"><h2>Sefer notları</h2><p class="muted">Ordu hedefe ulaştığında kuşatma başlat. Kuşatma ilerlemesi her yıl işler. Hücum kayıp riski taşır.</p><div id="siegeInfo"></div></div></div></section>
+<section id="diplotab" class="hidden"><div class="grid"><div class="panel"><h2>Elçiler ve devletler</h2><div id="diplomacyList"></div></div><div class="panel"><h2>Görüşme</h2><div id="diplomacyDetail">Bir devlet seç.</div><div class="actions"><button id="trade">Ticaret anlaşması</button><button id="tribute">Haraç iste</button><button id="peace">Barış öner</button></div></div></div></section>
+<section id="admintab" class="hidden"><div class="panel"><h2>Eyalet idaresi</h2><div id="adminList"></div></div></section>
+<section id="courttab" class="hidden"><div class="grid"><div class="panel"><h2>Divan-ı Hümayun</h2><p>Sadrazam: Çandarlı Ali Paşa</p><p>Baş danışman: Şehzade Süleyman</p><p class="muted">Divan kararları hazinenin, halkın ve ordunun durumunu etkiler.</p><div class="actions"><button id="reform">Vergi reformu</button><button id="festival">Şenlik düzenle</button></div></div><div class="panel"><h2>Hanedan</h2><div id="dynasty"></div><div class="actions"><button id="succession">Hükümdarın ölümü / Veraset</button></div></div></div></section>
+<div class="panel" style="margin-top:9px"><h2>Vakanüvis kayıtları</h2><div class="log" id="log"></div></div>
+<div class="footer">IMPERIUM — çevrimdışı oynanabilir mobil alfa • Tarihsel içerik ve harita temsili oyunlaştırılmıştır.</div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const regions=[
+{name:"Edirne",x:245,y:145,owner:"Bizans",wealth:70,loyalty:72,fort:2,troops:1800},
+{name:"İstanbul",x:350,y:205,owner:"Bizans",wealth:120,loyalty:65,fort:5,troops:4000},
+{name:"Bursa",x:440,y:290,owner:"Osmanlı",wealth:95,loyalty:83,fort:3,troops:2200},
+{name:"Ankara",x:590,y:260,owner:"Osmanlı",wealth:65,loyalty:78,fort:2,troops:1500},
+{name:"Konya",x:650,y:365,owner:"Osmanlı",wealth:55,loyalty:80,fort:2,troops:1200},
+{name:"Sivas",x:720,y:190,owner:"Osmanlı",wealth:60,loyalty:69,fort:2,troops:1100},
+{name:"Selanik",x:190,y:290,owner:"Bizans",wealth:80,loyalty:58,fort:3,troops:1700},
+{name:"Gelibolu",x:295,y:250,owner:"Bizans",wealth:50,loyalty:61,fort:2,troops:900}
+];
+let state={year:1389,civ:"Osmanlı",ruler:"I. Bayezid",gold:500,troops:12000,stability:72,selected:"Bursa",armyAt:"Bursa",target:"Edirne",siege:null,relations:{"Bizans":-25,"Memlük":15,"Altın Orda":-5,"Venedik":5},trade:[],log:[],dead:false};
+let dipTarget="Bizans";
+function log(s){state.log.unshift(`${state.year}: ${s}`);state.log=state.log.slice(0,35);$("log").innerHTML=state.log.map(x=>`• ${x}`).join("<br>")}
+function region(){return regions.find(r=>r.name===state.selected)}
+function update(){
+$("year").textContent=state.year;$("yearInput").value=state.year;$("gold").textContent=state.gold;$("troops").textContent=state.troops.toLocaleString("tr-TR");$("stability").textContent=state.stability+"%";
+$("selectedName").textContent=region().name;$("selectedInfo").innerHTML=`Sahip: <b>${region().owner}</b> · Hazine katkısı: ${region().wealth}/yıl · Sadakat: ${region().loyalty}% · Kale seviyesi: ${region().fort}`;
+$("realmInfo").textContent=state.civ+" Devleti";$("armyInfo").innerHTML=`Konum: <b>${state.armyAt}</b><br>Mevcut kuvvet: <b>${state.troops.toLocaleString("tr-TR")}</b>`;
+$("armyTarget").innerHTML=regions.map(r=>`<option ${r.name===state.target?"selected":""}>${r.name}</option>`).join("");
+$("siegeInfo").textContent=state.siege?`${state.siege.name} kuşatması: ${state.siege.progress}% · Savunma: ${state.siege.defender}`:"Aktif kuşatma yok.";
+$("diplomacyList").innerHTML=Object.entries(state.relations).map(([n,v])=>`<div class="province"><span>${n}<br><small class="muted">İlişki: ${v}</small></span><button onclick="chooseDip('${n}')">Elçi gönder</button></div>`).join("");
+$("diplomacyDetail").innerHTML=`<b>${dipTarget}</b><p class="muted">Elçi kabul salonunda görüşme bekliyor. İlişki: ${state.relations[dipTarget]??0}</p>`;
+$("adminList").innerHTML=regions.filter(r=>r.owner===state.civ).map(r=>`<div class="province"><span><b>${r.name}</b><br><small class="muted">Sadakat ${r.loyalty}% · Kale ${r.fort} · Gelir ${r.wealth}</small></span><span><button onclick="tax('${r.name}')">Vergi +</button> <button onclick="relief('${r.name}')">İmtiyaz</button></span></div>`).join("");
+$("dynasty").innerHTML=`Hükümdar: <b>${state.ruler}</b><br>Varis: <b>${state.ruler==="I. Bayezid"?"Süleyman Çelebi":"Hanedan varisi"}</b><br>Hanedan meşruiyeti: ${state.stability}%`;
+draw(); }
+function draw(){let c=$("map"),ctx=c.getContext("2d");ctx.clearRect(0,0,c.width,c.height);
+ctx.fillStyle="#7896a0";ctx.fillRect(0,0,900,500);
+ctx.fillStyle="#b9b18d";ctx.beginPath();ctx.moveTo(60,40);ctx.lineTo(540,30);ctx.lineTo(850,100);ctx.lineTo(820,430);ctx.lineTo(440,475);ctx.lineTo(110,380);ctx.closePath();ctx.fill();
+ctx.strokeStyle="#e1d5b5";ctx.lineWidth=3;ctx.stroke();
+ctx.fillStyle="#66859b";ctx.beginPath();ctx.ellipse(355,220,55,24,-.3,0,Math.PI*2);ctx.fill();
+regions.forEach(r=>{ctx.fillStyle=r.owner===state.civ?"#a34e3f":r.owner==="Bizans"?"#526f9a":"#777";ctx.beginPath();ctx.arc(r.x,r.y,17+r.fort,0,Math.PI*2);ctx.fill();ctx.strokeStyle=r.name===state.selected?"#fff2b0":"#2b2b2b";ctx.lineWidth=r.name===state.selected?4:1.5;ctx.stroke();ctx.fillStyle="#fff";ctx.font="bold 16px system-ui";ctx.textAlign="center";ctx.fillText(r.name,r.x,r.y+38)});
+ctx.fillStyle="#f4d16f";ctx.beginPath();ctx.arc(regions.find(r=>r.name===state.armyAt).x,regions.find(r=>r.name===state.armyAt).y,7,0,Math.PI*2);ctx.fill();ctx.fillStyle="#252525";ctx.font="12px system-ui";ctx.fillText("▲ ORDU",regions.find(r=>r.name===state.armyAt).x,regions.find(r=>r.name===state.armyAt).y-13);
+}
+$("map").addEventListener("click",e=>{let rect=$("map").getBoundingClientRect(),x=(e.clientX-rect.left)*900/rect.width,y=(e.clientY-rect.top)*500/rect.height;let r=regions.slice().sort((a,b)=>Math.hypot(a.x-x,a.y-y)-Math.hypot(b.x-x,b.y-y))[0];if(Math.hypot(r.x-x,r.y-y)<55){state.selected=r.name;update()}});
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("active"));b.classList.add("active");["maptab","armytab","diplotab","admintab","courttab"].forEach(id=>$(id).classList.toggle("hidden",id!==b.dataset.tab))});
+$("civ").onchange=()=>{state.civ=$("civ").value;regions.forEach(r=>{if(r.name==="Bursa"||r.name==="Ankara"||r.name==="Konya"||r.name==="Sivas")r.owner=state.civ});update();log(state.civ+" yönetimi devralındı.")};
+$("ruler").onchange=()=>{state.ruler=$("ruler").value;update()};
+$("recruit").onclick=()=>{if(state.gold<80)return log("Hazine asker toplamak için yetersiz.");state.gold-=80;state.troops+=1000;log("1.000 asker silah altına alındı.");update()};
+$("build").onclick=()=>{let r=region();if(state.gold<100)return log("Tahkimat için hazine yetersiz.");state.gold-=100;r.fort++;log(r.name+" tahkimatı güçlendirildi.");update()};
+$("armyTarget").onchange=()=>state.target=$("armyTarget").value;
+$("march").onclick=()=>{state.armyAt=state.target;log("Ordu "+state.target+" bölgesine ulaştı.");update()};
+$("siege").onclick=()=>{let r=regions.find(x=>x.name===state.armyAt);if(r.owner===state.civ)return log("Kendi toprağını kuşatamazsın.");state.siege={name:r.name,progress:0,defender:r.troops};log(r.name+" kuşatıldı. Erzak ve zaman gerekecek.");update()};
+$("assault").onclick=()=>{if(!state.siege)return log("Önce bir kuşatma başlat.");let r=regions.find(x=>x.name===state.siege.name),loss=Math.floor(state.troops*(.08+Math.random()*.15));state.troops=Math.max(0,state.troops-loss);if(state.troops>r.troops*.65||state.siege.progress>70){r.owner=state.civ;r.loyalty=45;state.gold+=r.wealth*2;log(r.name+" ele geçirildi. Kayıp: "+loss+" asker.");state.siege=null}else{r.troops=Math.max(200,Math.floor(r.troops*.7));state.siege.progress+=20;log("Hücum püskürtüldü. Kayıp: "+loss+" asker.");}update()};
+window.chooseDip=n=>{dipTarget=n;update()};
+$("trade").onclick=()=>{state.relations[dipTarget]=Math.min(100,(state.relations[dipTarget]||0)+15);state.gold+=35;log(dipTarget+" ile ticaret anlaşması yapıldı; hazine +35.");update()};
+$("tribute").onclick=()=>{let v=state.relations[dipTarget]||0;if(v<20){state.stability=Math.max(0,state.stability-4);log(dipTarget+" haraç talebini reddetti. İstikrar azaldı.")}else{state.gold+=90;state.relations[dipTarget]-=15;log(dipTarget+" haraç ödemeyi kabul etti.")}update()};
+$("peace").onclick=()=>{state.relations[dipTarget]=Math.min(100,(state.relations[dipTarget]||0)+25);log(dipTarget+" ile barış görüşmeleri olumlu sonuçlandı.");update()};
+window.tax=n=>{let r=regions.find(x=>x.name===n);r.wealth+=15;r.loyalty=Math.max(0,r.loyalty-8);log(n+" vergileri artırıldı; sadakat düştü.");update()};
+window.relief=n=>{let r=regions.find(x=>x.name===n);if(state.gold<40)return log("Hazine yetersiz.");state.gold-=40;r.loyalty=Math.min(100,r.loyalty+12);log(n+" halkına vergi imtiyazı tanındı.");update()};
+$("reform").onclick=()=>{state.gold+=100;state.stability=Math.max(0,state.stability-5);log("Vergi reformu hazinenin gelirini artırdı, huzursuzluk yarattı.");update()};
+$("festival").onclick=()=>{if(state.gold<60)return log("Şenlik için hazine yetersiz.");state.gold-=60;state.stability=Math.min(100,state.stability+8);log("Şenlikler halkın moralini yükseltti.");update()};
+$("succession").onclick=()=>{if(state.dead)return;state.dead=true;let heir=state.ruler==="I. Bayezid"?"Süleyman Çelebi":state.ruler==="II. Mehmed"?"II. Bayezid":"Şehzade Selim";state.ruler=heir;state.stability=Math.max(25,state.stability-18);log("Hükümdar öldü. "+heir+" tahta çıktı; veraset krizi istikrarı sarstı.");update()};
+function nextYear(){state.year++;state.gold+=regions.filter(r=>r.owner===state.civ).reduce((a,r)=>a+r.wealth,0);if(state.siege){state.siege.progress=Math.min(100,state.siege.progress+18);state.siege.defender=Math.max(0,state.siege.defender-150);log(state.siege.name+" kuşatmasında ilerleme: "+state.siege.progress+"%.")}regions.filter(r=>r.owner===state.civ).forEach(r=>{if(r.loyalty<30&&Math.random()<.15){r.owner="Bağımsız";log(r.name+" bölgesinde isyan çıktı!")}});if(state.stability<35&&Math.random()<.2)log("Sarayda hizipler güç kazanıyor.");update()}
+$("nextTop").onclick=nextYear;$("saveTop").onclick=save;
+function save(){let data={state,regions};try{localStorage.setItem("imperium_save",JSON.stringify(data));log("Oyun cihazına kaydedildi.")}catch(e){log("Tarayıcı kaydı desteklemiyor.")}}
+function load(){try{let d=JSON.parse(localStorage.getItem("imperium_save"));if(d){state=d.state;regions.splice(0,regions.length,...d.regions);$("civ").value=state.civ;$("ruler").innerHTML=`<option>${state.ruler}</option>`;update();log("Kayıt yüklendi.")}}catch(e){}}
+$("yearInput").onchange=()=>{state.year=Number($("yearInput").value)||1389;update()};
+$("civ").value=state.civ;load();update();log("Yeni saltanat başladı. Haritadan bir bölge seç."); 
+</script></body></html>
