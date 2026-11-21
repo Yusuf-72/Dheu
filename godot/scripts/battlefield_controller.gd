@@ -7,12 +7,16 @@ var selected_index := 0
 var status_label: Label
 var unit_scene: PackedScene
 var combat_clock := 0.0
+var siege_progress := 0.0
+var siege_bar: ProgressBar
+var siege_won := false
 
 func _ready() -> void:
 	unit_scene = load("res://scenes/battle_unit.tscn")
 	commander = BattleCommander.new()
 	add_child(commander)
 	commander.battle_log.connect(_set_status)
+	_build_fort()
 	_spawn_armies()
 	_build_battle_hud()
 	_select_unit(0)
@@ -40,7 +44,31 @@ func _spawn_armies() -> void:
 		mesh.material_override = material
 		enemy.receive_order(BattleCommander.Order.ADVANCE, Vector3(0, 0, 3), BattleCommander.Formation.LINE)
 
+func _build_fort() -> void:
+	var fort := MeshInstance3D.new()
+	fort.name = "Fortress"
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(10, 5, 3)
+	fort.mesh = mesh
+	fort.position = Vector3(0, 2.5, -15)
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color("#77746b")
+	fort.material_override = material
+	add_child(fort)
+
 func _physics_process(delta: float) -> void:
+	if not siege_won:
+		var siege_force := 0
+		for unit in friendly_units:
+			if is_instance_valid(unit) and unit.active_order == BattleCommander.Order.SIEGE and unit.global_position.distance_to(Vector3(0, 0, -12)) < 4.0:
+				siege_force += 1
+		if siege_force > 0:
+			siege_progress = minf(100.0, siege_progress + delta * 1.7 * siege_force)
+			if is_instance_valid(siege_bar):
+				siege_bar.value = siege_progress
+			if siege_progress >= 100.0:
+				siege_won = true
+				_set_status("Kuşatma başarılı! Kale ele geçirildi.")
 	combat_clock += delta
 	if combat_clock < 1.5:
 		return
@@ -107,6 +135,15 @@ func _build_battle_hud() -> void:
 	_add_command_button(orders, "Hücum", func(): commander.issue_order(BattleCommander.Order.CHARGE))
 	_add_command_button(orders, "Tut", func(): commander.issue_order(BattleCommander.Order.HOLD))
 	_add_command_button(orders, "Çekil", func(): commander.issue_order(BattleCommander.Order.RETREAT))
+	var siege := Button.new()
+	siege.text = "Kuşatmayı başlat"
+	siege.pressed.connect(func(): commander.issue_order(BattleCommander.Order.SIEGE, Vector3(0, 0, -12)))
+	layout.add_child(siege)
+	siege_bar = ProgressBar.new()
+	siege_bar.min_value = 0
+	siege_bar.max_value = 100
+	siege_bar.value = 0
+	layout.add_child(siege_bar)
 	var back := Button.new()
 	back.text = "Saray'a dön"
 	back.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/palace.tscn"))
