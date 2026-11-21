@@ -1,6 +1,7 @@
 [gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/palace_controller.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/palace_manager.gd" id="2"]
 
 [sub_resource type="StandardMaterial3D" id="Stone"]
 albedo_color = Color(0.36, 0.29, 0.22, 1)
@@ -16,6 +17,7 @@ radius = 0.38
 height = 1.8
 
 [node name="Palace" type="Node3D"]
+script = ExtResource("2")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 
