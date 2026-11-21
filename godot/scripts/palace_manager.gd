@@ -6,6 +6,7 @@ var dialogue_text: Label
 var dialogue_choices: VBoxContainer
 var battle_commander: BattleCommander
 var map_panel: PanelContainer
+var succession_panel: PanelContainer
 var map_detail: Label
 var treasury_label: Label
 var date_label: Label
@@ -98,6 +99,10 @@ func _build_campaign_hud() -> void:
 	setup_button.text = "Hükümdar / Tarih"
 	setup_button.pressed.connect(_show_campaign_setup)
 	top.add_child(setup_button)
+	var succession_button := Button.new()
+	succession_button.text = "Halefiyet"
+	succession_button.pressed.connect(_show_succession)
+	top.add_child(succession_button)
 	var save_button := Button.new()
 	save_button.text = "Kaydet"
 	save_button.pressed.connect(_save_game)
@@ -108,6 +113,28 @@ func _build_campaign_hud() -> void:
 	map_panel.size = Vector2(720, 530)
 	hud.add_child(map_panel)
 	map_panel.visible = false
+	succession_panel = PanelContainer.new()
+	succession_panel.position = Vector2(380, 230)
+	succession_panel.size = Vector2(460, 230)
+	hud.add_child(succession_panel)
+	succession_panel.visible = false
+	var succession_layout := VBoxContainer.new()
+	succession_panel.add_child(succession_layout)
+	var succession_title := Label.new()
+	succession_title.text = "HÜKÜMDARIN VEFATI — HANEDAN KARARI"
+	succession_title.add_theme_font_size_override("font_size", 20)
+	succession_layout.add_child(succession_title)
+	var succession_info := Label.new()
+	succession_info.text = "Yeni hükümdarla devam edebilir veya seferi bitirebilirsin."
+	succession_layout.add_child(succession_info)
+	var heir_button := Button.new()
+	heir_button.text = "Varisle devam et"
+	heir_button.pressed.connect(_continue_as_heir)
+	succession_layout.add_child(heir_button)
+	var end_button := Button.new()
+	end_button.text = "Seferi bitir"
+	end_button.pressed.connect(_end_campaign)
+	succession_layout.add_child(end_button)
 	var columns := HBoxContainer.new()
 	map_panel.add_child(columns)
 	var left := VBoxContainer.new()
@@ -285,6 +312,8 @@ func _collect_tax() -> void:
 	map_detail.text += "\n\nTahsil edildi: %d altın." % income
 
 func _advance_day() -> void:
+	if bool(SaveManager.campaign.get("ended", false)):
+		return
 	var current := Time.get_datetime_dict_from_datetime_string(str(SaveManager.campaign.get("date", "1444-11-10")), false)
 	var stamp := Time.get_unix_time_from_datetime_dict(current) + 86400
 	var next_date := Time.get_datetime_dict_from_unix_time(stamp)
@@ -295,6 +324,45 @@ func _advance_day() -> void:
 			daily_income += int(province.get("tax", 0))
 	SaveManager.campaign["treasury"] = int(SaveManager.campaign.get("treasury", 0)) + daily_income
 	_refresh_campaign_hud()
+	_check_succession()
+
+func _show_succession() -> void:
+	if succession_panel:
+		succession_panel.visible = true
+		if not is_mobile:
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+func _check_succession() -> void:
+	if bool(SaveManager.campaign.get("ended", false)):
+		return
+	var ruler_name := str(SaveManager.campaign.get("ruler", ""))
+	var death_years := {"II. Murad": 1451, "II. Mehmed": 1481, "XI. Konstantinos": 1453, "Hunyadi Yanoş": 1456}
+	var death_year := int(death_years.get(ruler_name, 9999))
+	var current_year := int(str(SaveManager.campaign.get("date", "1444-01-01")).substr(0, 4))
+	if current_year >= death_year and not bool(SaveManager.campaign.get("succession_resolved", false)):
+		_show_succession()
+
+func _continue_as_heir() -> void:
+	if not bool(SaveManager.campaign.get("dynasty_continuation", true)):
+		_end_campaign()
+		return
+	var ruler_name := str(SaveManager.campaign.get("ruler", ""))
+	var heirs := {"II. Murad": "II. Mehmed", "II. Mehmed": "II. Bayezid", "Hunyadi Yanoş": "Matthias Corvinus"}
+	if not heirs.has(ruler_name):
+		_end_campaign()
+		return
+	SaveManager.campaign["ruler"] = heirs[ruler_name]
+	SaveManager.campaign["succession_resolved"] = false
+	succession_panel.visible = false
+	_refresh_campaign_hud()
+	_save_game()
+
+func _end_campaign() -> void:
+	SaveManager.campaign["ended"] = true
+	succession_panel.visible = false
+	if date_label:
+		date_label.text = "Sefer sona erdi — hanedan devam etmiyor."
+	_save_game()
 
 func _refresh_campaign_hud() -> void:
 	if date_label:
