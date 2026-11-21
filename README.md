@@ -1,18 +1,28 @@
 # IMPERIUM
 
-Historical grand-strategy and ruler-life game for Android and PC.
+Historical strategy and ruler-perspective game for Android and PC.
 
-## Project status
-The existing Android WebView build is an early 2D management build, not the finished game. The new Godot 4 project is being built as the long-term 3D game runtime under `godot/`.
+## Current playable foundation
 
-## Godot project
-Open `godot/project.godot` with Godot 4.x. The current committed 3D foundation includes:
-- A navigable 3D palace room with collision geometry and lighting.
-- A first-person player controller with mouse look, WASD movement, sprint, and interaction input.
-- Mobile-compatible GL Compatibility renderer selection.
+The Godot 4 project is under `godot/`. It is the active game project; the old WebView app is retained only as a legacy demo.
 
-## Planned complete game systems
-The target release includes date/civilization/ruler selection, historical world map, province and economy simulation, diplomacy, dynasties and succession, tactical army command, sieges, and offline historical data. These systems are not yet complete and will be implemented and tested in the Godot project before calling the game finished.
+- First-person 3D palace room, movement, sprint and ambassador interaction.
+- Offline campaign save/load.
+- Selectable starter realm, ruler and campaign year (the currently seeded historical dataset is limited to 1300–1500).
+- Province map prototype with province selection, population, tax, food and garrison information.
+- Daily time advancement and basic treasury income.
+- Tactical battlefield prototype with three friendly units, three opposing units, formations, advance/charge/hold/retreat orders and simple close-combat attrition.
+- On-screen Android movement and interaction controls.
+- Godot Android export workflow in `.github/workflows/godot-android.yml`.
 
-## Android build
-The existing GitHub Actions workflow builds the current Android WebView application. It does not yet export the new Godot 3D project. Do not treat its APK as the finished 3D game.
+## Important scope limits
+
+This is an early playable prototype, not a finished grand-strategy release. The current map is a stylized regional prototype with eight sample provinces, not a geographically complete world map. Historical data contains only a few sample realms and rulers. Diplomacy is currently dialogue-only; trade, diplomacy AI, detailed siege simulation, full tactical combat, dynasty event chains, and complete historical coverage remain unfinished.
+
+## Open in Godot
+
+Use Godot 4.4.1 and open `godot/project.godot`.
+
+## Android APK
+
+The `Export IMPERIUM Godot Android APK` workflow builds the Godot 3D project and uploads an artifact named `imperium-godot-android-debug`. Open GitHub Actions in this repository, select the latest successful workflow run, and download its artifact. The separate legacy WebView workflow is manually triggered and is not the 3D game.
