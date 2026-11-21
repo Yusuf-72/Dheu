@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "description": "IMPERIUM offline historical campaign seed data",
+  "eras": [
+    {"id":"late_middle_ages","name":"Geç Orta Çağ","start_year":1300,"end_year":1500}
+  ],
+  "realms": [
+    {"id":"ottoman","name":"Osmanlı İmparatorluğu","culture":"Turkic","capital":"Edirne","start_year":1299},
+    {"id":"byzantine","name":"Bizans İmparatorluğu","culture":"Byzantine Greek","capital":"Konstantinopolis","start_year":330},
+    {"id":"hungary","name":"Macar Krallığı","culture":"Hungarian","capital":"Buda","start_year":1000},
+    {"id":"mamluk","name":"Memlük Sultanlığı","culture":"Mamluk","capital":"Kahire","start_year":1250}
+  ],
+  "rulers": [
+    {"id":"murad_ii","realm":"ottoman","name":"II. Murad","birth":1404,"reign_start":1421,"reign_end":1444},
+    {"id":"mehmed_ii","realm":"ottoman","name":"II. Mehmed","birth":1432,"reign_start":1444,"reign_end":1481},
+    {"id":"constantine_xi","realm":"byzantine","name":"XI. Konstantinos","birth":1405,"reign_start":1449,"reign_end":1453},
+    {"id":"john_hunyadi","realm":"hungary","name":"Hunyadi Yanoş","birth":1407,"reign_start":1446,"reign_end":1453}
+  ]
+}
