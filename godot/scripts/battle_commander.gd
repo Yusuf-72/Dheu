@@ -4,7 +4,7 @@ class_name BattleCommander
 signal order_issued(order_name: String, target: Vector3)
 signal battle_log(message: String)
 
-enum Order { ADVANCE, HOLD, CHARGE, RETREAT, MOVE_TO }
+enum Order { ADVANCE, HOLD, CHARGE, RETREAT, MOVE_TO, SIEGE }
 enum Formation { LINE, COLUMN, WEDGE, SQUARE }
 
 var selected_unit: Node3D
@@ -25,7 +25,7 @@ func issue_order(order: Order, target: Vector3 = Vector3.ZERO) -> bool:
 	if not is_instance_valid(selected_unit):
 		battle_log.emit("Önce komuta edilecek birliği seçin.")
 		return false
-	var names := ["İLERLE", "MEVZİYİ KORU", "HÜCUM", "GERİ ÇEKİL", "HEDEFE İLERLE"]
+	var names := ["İLERLE", "MEVZİYİ KORU", "HÜCUM", "GERİ ÇEKİL", "HEDEFE İLERLE", "KUŞATMAYA GEÇ"]
 	var order_name: String = names[order]
 	if selected_unit.has_method("receive_order"):
 		selected_unit.receive_order(order, target, current_formation)
