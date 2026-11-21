@@ -1,9 +1,5 @@
-# IMPERIUM 0.5 — Android build
+# IMPERIUM — mobil strateji alfa
 
-Offline strategy alpha wrapped in a minimal Android WebView app. Gameplay is loaded from `app/src/main/assets/index.html` and works without network access.
+Çevrimdışı çalışan HTML5 strateji prototipi ve Android APK derleme projesi.
 
-## Build APK
-GitHub Actions builds a debug APK on every push to `main`. You can also run **Build IMPERIUM Android APK** manually from the Actions tab. Download the `imperium-android-debug-apk` artifact.
-
-## Current scope
-This is a mobile strategy alpha prototype with a map, regions, treasury, army, diplomacy, siege and succession mechanics. It is not the complete planned 3D game.
+GitHub Actions sekmesinde **Build IMPERIUM Android APK** iş akışını çalıştırın. Başarılı derlemede `imperium-android-debug-apk` artifact'ini indirin. Bu erken alfa, tam 3D saray oyununu içermez.
