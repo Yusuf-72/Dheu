@@ -32,6 +32,9 @@ func receive_order(order: int, target: Vector3, new_formation: int) -> void:
 		4:
 			destination = target
 			has_destination = true
+		5:
+			destination = target if target != Vector3.ZERO else Vector3(0, 0, -12)
+			has_destination = true
 
 func set_formation(new_formation: int) -> void:
 	formation = new_formation
@@ -67,7 +70,8 @@ func _physics_process(delta: float) -> void:
 	offset.y = 0.0
 	if offset.length() < 0.8:
 		has_destination = false
-		active_order = 1
+		if active_order != 5:
+			active_order = 1
 		return
 	var direction := offset.normalized()
 	var speed := charge_speed if active_order == 2 else move_speed
