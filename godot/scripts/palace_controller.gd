@@ -5,8 +5,8 @@ extends CharacterBody3D
 @export var mouse_sensitivity := 0.0022
 @export var gravity := 18.0
 @onready var head: Node3D = $Head
-@onready var camera: Camera3D = $Head/Camera3D
-@onready var prompt: Label = get_tree().current_scene.get_node("HUD/Prompt")
+@onready var interact_ray: RayCast3D = $Head/Camera3D/InteractRay
+@onready var prompt: Label = get_tree().current_scene.get_node_or_null("HUD/Prompt")
 var pitch := 0.0
 var nearby_interactable: Node3D
 
@@ -23,8 +23,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if event is InputEventMouseButton and event.pressed and Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	if event.is_action_pressed("interact") and nearby_interactable:
-		nearby_interactable.interact()
+	if event.is_action_pressed("interact") and is_instance_valid(nearby_interactable):
+		if nearby_interactable.has_method("interact"):
+			nearby_interactable.interact()
 
 func _physics_process(delta: float) -> void:
 	var input_dir := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
@@ -37,7 +38,16 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.y = -0.1
 	move_and_slide()
+	_update_interaction_target()
 
-func set_interactable(target: Node3D) -> void:
-	nearby_interactable = target
-	prompt.text = "[E] Görüş / Etkileşim" if target else "WASD: hareket  •  Fare: bakış  •  Shift: koş"
+func _update_interaction_target() -> void:
+	interact_ray.force_raycast_update()
+	var target: Node3D
+	if interact_ray.is_colliding():
+		var collider := interact_ray.get_collider()
+		if collider is Node3D and collider.has_method("interact"):
+			target = collider
+	if target != nearby_interactable:
+		nearby_interactable = target
+		if prompt:
+			prompt.text = "[E] Elçiyle görüş" if target else "WASD: hareket • Fare: bakış • Shift: koş • E: etkileşim"
