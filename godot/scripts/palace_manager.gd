@@ -90,20 +90,26 @@ func _build_campaign_hud() -> void:
 	top.add_child(save_button)
 	map_panel = PanelContainer.new()
 	map_panel.position = Vector2(30, 115)
-	map_panel.size = Vector2(520, 520)
+	map_panel.size = Vector2(700, 520)
 	hud.add_child(map_panel)
 	map_panel.visible = false
 	var columns := HBoxContainer.new()
 	map_panel.add_child(columns)
 	var left := VBoxContainer.new()
-	left.custom_minimum_size.x = 205
+	left.custom_minimum_size.x = 400
 	columns.add_child(left)
 	var heading := Label.new()
 	heading.text = "EYALETLER"
 	heading.add_theme_font_size_override("font_size", 20)
 	left.add_child(heading)
-	map_list = VBoxContainer.new()
-	left.add_child(map_list)
+	var map_view := Control.new()
+	map_view.name = "ProvinceMap"
+	map_view.custom_minimum_size = Vector2(390, 420)
+	map_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	map_view.set_script(load("res://scripts/province_map.gd"))
+	map_view.call("set_provinces", provinces)
+	map_view.connect("province_clicked", _select_province_by_id)
+	left.add_child(map_view)
 	var right := VBoxContainer.new()
 	columns.add_child(right)
 	map_detail = Label.new()
@@ -118,12 +124,6 @@ func _build_campaign_hud() -> void:
 	close_button.text = "Haritayı kapat"
 	close_button.pressed.connect(_toggle_map)
 	right.add_child(close_button)
-	for province in provinces:
-		var button := Button.new()
-		button.text = province.name
-		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		button.pressed.connect(_select_province.bind(province))
-		map_list.add_child(button)
 	if not provinces.is_empty():
 		_select_province(provinces[0])
 
@@ -133,6 +133,12 @@ func _toggle_map() -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	else:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+func _select_province_by_id(province_id: String) -> void:
+	for province in provinces:
+		if str(province.get("id", "")) == province_id:
+			_select_province(province)
+			return
 
 func _select_province(province: Dictionary) -> void:
 	selected_province = province
