@@ -16,7 +16,7 @@ var is_mobile := false
 
 func _ready() -> void:
 	is_mobile = OS.has_feature("mobile")
-	SaveManager.load_campaign()
+	var has_saved_campaign := SaveManager.load_campaign()
 	battle_commander = BattleCommander.new()
 	battle_commander.name = "BattleCommander"
 	add_child(battle_commander)
@@ -25,6 +25,8 @@ func _ready() -> void:
 	_build_campaign_hud()
 	_add_ambassador()
 	_refresh_campaign_hud()
+	if not has_saved_campaign:
+		_show_campaign_setup()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -322,6 +324,7 @@ func _advance_day() -> void:
 	for province in provinces:
 		if province.get("realm") == "ottoman":
 			daily_income += int(province.get("tax", 0))
+	daily_income += int(SaveManager.campaign.get("trade_income", 0))
 	SaveManager.campaign["treasury"] = int(SaveManager.campaign.get("treasury", 0)) + daily_income
 	_refresh_campaign_hud()
 	_check_succession()
@@ -392,14 +395,29 @@ func open_ambassador_dialogue(name: String, opening: String, options: Array[Stri
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 func _on_diplomatic_choice(option: String) -> void:
+	var partner := "Bizans İmparatorluğu"
+	var relations: Dictionary = SaveManager.campaign.get("relations", {})
+	var current_relation := int(relations.get(partner, 0))
 	match option:
 		"Ticaret anlaşması öner":
-			dialogue_text.text = "Elçi: Ticaret şartlarını görüşmek üzere heyetimizi görevlendireceğiz."
+			SaveManager.campaign["trade_agreements"] = int(SaveManager.campaign.get("trade_agreements", 0)) + 1
+			SaveManager.campaign["trade_income"] = int(SaveManager.campaign.get("trade_income", 0)) + 8
+			SaveManager.campaign["treasury"] = int(SaveManager.campaign.get("treasury", 0)) + 50
+			relations[partner] = mini(100, current_relation + 5)
+			dialogue_text.text = "Elçi: Ticaret anlaşmasını kabul ediyoruz. Hazineye 50 altın, günlük gelire 8 altın eklendi."
 		"Barış ve dostluk teklif et":
-			dialogue_text.text = "Elçi: Barış teklifinizi hükümdarıma ileteceğim."
+			relations[partner] = mini(100, current_relation + 15)
+			SaveManager.campaign["stability"] = mini(100, int(SaveManager.campaign.get("stability", 75)) + 2)
+			dialogue_text.text = "Elçi: Barış teklifinizi kabul ediyoruz. İlişkiler ve devlet istikrarı iyileşti."
 		"Askerî ittifak görüş":
-			dialogue_text.text = "Elçi: Ortak düşmanlarımıza karşı ittifak şartları müzakere edilebilir."
+			relations[partner] = mini(100, current_relation + 25)
+			SaveManager.campaign["alliances"] = int(SaveManager.campaign.get("alliances", 0)) + 1
+			dialogue_text.text = "Elçi: Askerî ittifak kuruldu. İlişkiler belirgin biçimde güçlendi."
 		_:
 			(dialogue_layer.get_meta("panel") as Control).visible = false
 			if not is_mobile:
 				Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+			return
+	SaveManager.campaign["relations"] = relations
+	_refresh_campaign_hud()
+	_save_game()
