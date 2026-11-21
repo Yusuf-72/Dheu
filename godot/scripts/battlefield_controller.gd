@@ -10,6 +10,7 @@ var combat_clock := 0.0
 var siege_progress := 0.0
 var siege_bar: ProgressBar
 var siege_won := false
+var battle_result_recorded := false
 
 func _ready() -> void:
 	unit_scene = load("res://scenes/battle_unit.tscn")
@@ -68,7 +69,10 @@ func _physics_process(delta: float) -> void:
 				siege_bar.value = siege_progress
 			if siege_progress >= 100.0:
 				siege_won = true
-				_set_status("Kuşatma başarılı! Kale ele geçirildi.")
+				SaveManager.campaign["sieges_won"] = int(SaveManager.campaign.get("sieges_won", 0)) + 1
+				SaveManager.campaign["treasury"] = int(SaveManager.campaign.get("treasury", 0)) + 150
+				SaveManager.save_campaign()
+				_set_status("Kuşatma başarılı! Kale ele geçirildi. Hazineye 150 altın eklendi.")
 	combat_clock += delta
 	if combat_clock < 1.5:
 		return
@@ -95,10 +99,18 @@ func _physics_process(delta: float) -> void:
 	for unit in enemy_units:
 		if is_instance_valid(unit):
 			alive_enemies += 1
-	if alive_enemies == 0:
-		_set_status("Zafer! Düşman kuvvetleri dağıtıldı.")
-	elif alive_friends == 0:
-		_set_status("Yenilgi. Ordun dağıldı.")
+	if not battle_result_recorded and alive_enemies == 0:
+		battle_result_recorded = true
+		SaveManager.campaign["battles_won"] = int(SaveManager.campaign.get("battles_won", 0)) + 1
+		SaveManager.campaign["treasury"] = int(SaveManager.campaign.get("treasury", 0)) + 100
+		SaveManager.save_campaign()
+		_set_status("Zafer! Düşman kuvvetleri dağıtıldı. Hazineye 100 altın eklendi.")
+	elif not battle_result_recorded and alive_friends == 0:
+		battle_result_recorded = true
+		SaveManager.campaign["battles_lost"] = int(SaveManager.campaign.get("battles_lost", 0)) + 1
+		SaveManager.campaign["stability"] = maxi(0, int(SaveManager.campaign.get("stability", 75)) - 5)
+		SaveManager.save_campaign()
+		_set_status("Yenilgi. Ordun dağıldı; devlet istikrarı düştü.")
 
 func _build_battle_hud() -> void:
 	var hud := CanvasLayer.new()
