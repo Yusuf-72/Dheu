@@ -31,7 +31,7 @@ func _draw() -> void:
 	draw_polyline(PackedVector2Array([land[0], land[1], land[2], land[3], land[4], land[5], land[6], land[7], land[8], land[9], land[10], land[11], land[0]]), Color("#c6b58b"), 2.0, true)
 	for province in province_data:
 		var point := _province_point(province)
-		var owned := province.get("realm", "") == "ottoman"
+		var owned: bool = str(province.get("realm", "")) == "ottoman"
 		var fill := Color("#c29a4b") if owned else Color("#9b6d78")
 		draw_circle(point, 9.0, Color("#161a1d"))
 		draw_circle(point, 6.5, fill)
