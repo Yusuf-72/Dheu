@@ -1,0 +1,23 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/ambassador.gd" id="1"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh"]
+radius = 0.42
+height = 1.8
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape"]
+radius = 0.42
+height = 1.8
+
+[node name="Ambassador" type="StaticBody3D"]
+position = Vector3(2.5, 0.9, -2.0)
+collision_layer = 1
+script = ExtResource("1")
+ambassador_name = "Bizans Elçisi"
+
+[node name="Visual" type="MeshInstance3D" parent="."]
+mesh = SubResource("CapsuleMesh")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("CapsuleShape")
