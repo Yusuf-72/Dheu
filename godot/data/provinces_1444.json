@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "map_name": "Anadolu ve Balkanlar — 1444",
+  "provinces": [
+    {"id":"edirne","name":"Edirne","realm":"ottoman","population":185000,"tax":42,"food":78,"garrison":3200,"terrain":"Ova","x":0.55,"y":0.35},
+    {"id":"bursa","name":"Bursa","realm":"ottoman","population":210000,"tax":48,"food":82,"garrison":2800,"terrain":"Dağlık","x":0.67,"y":0.62},
+    {"id":"istanbul","name":"Konstantiniyye","realm":"byzantine","population":160000,"tax":55,"food":54,"garrison":4500,"terrain":"Boğaz","x":0.48,"y":0.26},
+    {"id":"thessaloniki","name":"Selanik","realm":"byzantine","population":95000,"tax":31,"food":63,"garrison":1800,"terrain":"Kıyı","x":0.28,"y":0.48},
+    {"id":"sofia","name":"Sofya","realm":"ottoman","population":72000,"tax":22,"food":76,"garrison":1400,"terrain":"Ova","x":0.22,"y":0.18},
+    {"id":"skopje","name":"Üsküp","realm":"ottoman","population":58000,"tax":17,"food":69,"garrison":900,"terrain":"Dağlık","x":0.12,"y":0.43},
+    {"id":"ankara","name":"Ankara","realm":"ottoman","population":88000,"tax":24,"food":71,"garrison":1600,"terrain":"Bozkır","x":0.82,"y":0.46},
+    {"id":"konya","name":"Konya","realm":"ottoman","population":76000,"tax":20,"food":74,"garrison":1200,"terrain":"Bozkır","x":0.78,"y":0.78}
+  ]
+}
