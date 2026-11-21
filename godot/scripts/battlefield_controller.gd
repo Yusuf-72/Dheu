@@ -1,8 +1,8 @@
 extends Node3D
 
 var commander: BattleCommander
-var friendly_units: Array[Node3D] = []
-var enemy_units: Array[Node3D] = []
+var friendly_units: Array[ImperiumBattleUnit] = []
+var enemy_units: Array[ImperiumBattleUnit] = []
 var selected_index := 0
 var status_label: Label
 var unit_scene: PackedScene
@@ -19,7 +19,7 @@ func _ready() -> void:
 
 func _spawn_armies() -> void:
 	for i in range(3):
-		var unit := unit_scene.instantiate()
+		var unit := unit_scene.instantiate() as ImperiumBattleUnit
 		unit.name = "Yeniçeri %d" % (i + 1)
 		unit.position = Vector3(-5.0 + i * 5.0, 0.1, 5.0)
 		add_child(unit)
@@ -29,7 +29,7 @@ func _spawn_armies() -> void:
 		material.albedo_color = Color("#b68a45")
 		mesh.material_override = material
 	for i in range(3):
-		var enemy := unit_scene.instantiate()
+		var enemy := unit_scene.instantiate() as ImperiumBattleUnit
 		enemy.name = "Düşman %d" % (i + 1)
 		enemy.position = Vector3(-5.0 + i * 5.0, 0.1, -7.0)
 		add_child(enemy)
@@ -48,7 +48,7 @@ func _physics_process(delta: float) -> void:
 	for enemy in enemy_units:
 		if not is_instance_valid(enemy):
 			continue
-		var target: Node3D
+		var target: ImperiumBattleUnit
 		var nearest := 99999.0
 		for ally in friendly_units:
 			if is_instance_valid(ally):
