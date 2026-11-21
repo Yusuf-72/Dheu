@@ -6,14 +6,16 @@ var dialogue_text: Label
 var dialogue_choices: VBoxContainer
 var battle_commander: BattleCommander
 var map_panel: PanelContainer
-var map_list: VBoxContainer
 var map_detail: Label
 var treasury_label: Label
 var date_label: Label
 var provinces: Array = []
 var selected_province: Dictionary = {}
+var is_mobile := false
 
 func _ready() -> void:
+	is_mobile = OS.has_feature("mobile")
+	SaveManager.load_campaign()
 	battle_commander = BattleCommander.new()
 	battle_commander.name = "BattleCommander"
 	add_child(battle_commander)
@@ -24,8 +26,11 @@ func _ready() -> void:
 	_refresh_campaign_hud()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_M:
-		_toggle_map()
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_M:
+			_toggle_map()
+		elif event.keycode == KEY_B:
+			_open_battlefield()
 
 func _load_provinces() -> void:
 	var file := FileAccess.open("res://data/provinces_1444.json", FileAccess.READ)
@@ -69,6 +74,7 @@ func _build_campaign_hud() -> void:
 	var hud := $HUD
 	var top := HBoxContainer.new()
 	top.position = Vector2(20, 65)
+	top.add_theme_constant_override("separation", 12)
 	hud.add_child(top)
 	date_label = Label.new()
 	date_label.add_theme_font_size_override("font_size", 18)
@@ -77,34 +83,43 @@ func _build_campaign_hud() -> void:
 	treasury_label.add_theme_font_size_override("font_size", 18)
 	top.add_child(treasury_label)
 	var map_button := Button.new()
-	map_button.text = "Dünya Haritası [M]"
+	map_button.text = "Harita [M]"
 	map_button.pressed.connect(_toggle_map)
 	top.add_child(map_button)
 	var advance_button := Button.new()
-	advance_button.text = "1 Gün İlerle"
+	advance_button.text = "1 Gün"
 	advance_button.pressed.connect(_advance_day)
 	top.add_child(advance_button)
+	var battle_button := Button.new()
+	battle_button.text = "Savaş Alanı [B]"
+	battle_button.pressed.connect(_open_battlefield)
+	top.add_child(battle_button)
+	var setup_button := Button.new()
+	setup_button.text = "Hükümdar / Tarih"
+	setup_button.pressed.connect(_show_campaign_setup)
+	top.add_child(setup_button)
 	var save_button := Button.new()
 	save_button.text = "Kaydet"
 	save_button.pressed.connect(_save_game)
 	top.add_child(save_button)
+
 	map_panel = PanelContainer.new()
-	map_panel.position = Vector2(30, 115)
-	map_panel.size = Vector2(700, 520)
+	map_panel.position = Vector2(25, 115)
+	map_panel.size = Vector2(720, 530)
 	hud.add_child(map_panel)
 	map_panel.visible = false
 	var columns := HBoxContainer.new()
 	map_panel.add_child(columns)
 	var left := VBoxContainer.new()
-	left.custom_minimum_size.x = 400
+	left.custom_minimum_size.x = 420
 	columns.add_child(left)
 	var heading := Label.new()
-	heading.text = "EYALETLER"
+	heading.text = "1444 SEFER HARİTASI — EYALETLER"
 	heading.add_theme_font_size_override("font_size", 20)
 	left.add_child(heading)
 	var map_view := Control.new()
 	map_view.name = "ProvinceMap"
-	map_view.custom_minimum_size = Vector2(390, 420)
+	map_view.custom_minimum_size = Vector2(410, 440)
 	map_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	map_view.set_script(load("res://scripts/province_map.gd"))
 	map_view.call("set_provinces", provinces)
@@ -126,13 +141,126 @@ func _build_campaign_hud() -> void:
 	right.add_child(close_button)
 	if not provinces.is_empty():
 		_select_province(provinces[0])
+	_build_campaign_setup(hud)
+	if is_mobile:
+		_build_touch_controls(hud)
+
+func _build_campaign_setup(hud: CanvasLayer) -> void:
+	var panel := PanelContainer.new()
+	panel.name = "CampaignSetup"
+	panel.position = Vector2(300, 150)
+	panel.size = Vector2(570, 400)
+	hud.add_child(panel)
+	var layout := VBoxContainer.new()
+	panel.add_child(layout)
+	var title := Label.new()
+	title.text = "SEFERİNİ BELİRLE"
+	title.add_theme_font_size_override("font_size", 24)
+	layout.add_child(title)
+	var realm_label := Label.new()
+	realm_label.text = "Medeniyet / Devlet"
+	layout.add_child(realm_label)
+	var realm := OptionButton.new()
+	realm.name = "RealmChoice"
+	for item in ["Osmanlı İmparatorluğu", "Bizans İmparatorluğu", "Macar Krallığı", "Memlük Sultanlığı"]:
+		realm.add_item(item)
+	realm.select(0)
+	layout.add_child(realm)
+	var ruler_label := Label.new()
+	ruler_label.text = "Hükümdar"
+	layout.add_child(ruler_label)
+	var ruler := OptionButton.new()
+	ruler.name = "RulerChoice"
+	for item in ["II. Murad", "II. Mehmed", "XI. Konstantinos", "Hunyadi Yanoş"]:
+		ruler.add_item(item)
+	ruler.select(0)
+	layout.add_child(ruler)
+	var year_label := Label.new()
+	year_label.text = "Başlangıç yılı (şimdilik 1300–1500 veri dönemi)"
+	layout.add_child(year_label)
+	var year := SpinBox.new()
+	year.name = "YearChoice"
+	year.min_value = 1300
+	year.max_value = 1500
+	year.value = 1444
+	year.step = 1
+	layout.add_child(year)
+	var dynasty := CheckBox.new()
+	dynasty.name = "DynastyChoice"
+	dynasty.text = "Hanedan değişiminde oyuna devam et"
+	dynasty.button_pressed = true
+	layout.add_child(dynasty)
+	var start := Button.new()
+	start.text = "Seferi başlat"
+	start.pressed.connect(_apply_campaign_setup.bind(panel))
+	layout.add_child(start)
+	panel.visible = false
+
+func _show_campaign_setup() -> void:
+	var panel := $HUD/CampaignSetup
+	panel.visible = true
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+func _apply_campaign_setup(panel: PanelContainer) -> void:
+	var realm := panel.get_node("VBoxContainer/RealmChoice") as OptionButton
+	var ruler := panel.get_node("VBoxContainer/RulerChoice") as OptionButton
+	var year := panel.get_node("VBoxContainer/YearChoice") as SpinBox
+	var dynasty := panel.get_node("VBoxContainer/DynastyChoice") as CheckBox
+	SaveManager.campaign["realm"] = realm.get_item_text(realm.selected)
+	SaveManager.campaign["ruler"] = ruler.get_item_text(ruler.selected)
+	SaveManager.campaign["date"] = "%04d-01-01" % int(year.value)
+	SaveManager.campaign["dynasty_continuation"] = dynasty.button_pressed
+	SaveManager.campaign["treasury"] = 1200
+	panel.visible = false
+	_refresh_campaign_hud()
+	if not is_mobile:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+func _build_touch_controls(hud: CanvasLayer) -> void:
+	var controls := HBoxContainer.new()
+	controls.name = "TouchControls"
+	controls.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	controls.position = Vector2(-360, -180)
+	controls.size = Vector2(340, 150)
+	controls.add_theme_constant_override("separation", 8)
+	hud.add_child(controls)
+	var directions := GridContainer.new()
+	directions.columns = 3
+	controls.add_child(directions)
+	var blank1 := Control.new()
+	directions.add_child(blank1)
+	_add_hold_button(directions, "▲", "move_forward")
+	var blank2 := Control.new()
+	directions.add_child(blank2)
+	_add_hold_button(directions, "◀", "move_left")
+	_add_hold_button(directions, "▼", "move_back")
+	_add_hold_button(directions, "▶", "move_right")
+	var actions := VBoxContainer.new()
+	controls.add_child(actions)
+	_add_hold_button(actions, "Koş", "sprint")
+	var interact := Button.new()
+	interact.text = "Etkileşim"
+	interact.custom_minimum_size = Vector2(105, 55)
+	interact.pressed.connect(_mobile_interact)
+	actions.add_child(interact)
+
+func _add_hold_button(parent: Control, caption: String, action: String) -> void:
+	var button := Button.new()
+	button.text = caption
+	button.custom_minimum_size = Vector2(62, 55)
+	button.button_down.connect(func(): Input.action_press(action))
+	button.button_up.connect(func(): Input.action_release(action))
+	parent.add_child(button)
+
+func _mobile_interact() -> void:
+	var player := get_tree().get_first_node_in_group("player")
+	if player and player.has_method("mobile_interact"):
+		player.mobile_interact()
 
 func _toggle_map() -> void:
 	map_panel.visible = not map_panel.visible
-	if map_panel.visible:
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	else:
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	if not is_mobile:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if map_panel.visible else Input.MOUSE_MODE_CAPTURED
 
 func _select_province_by_id(province_id: String) -> void:
 	for province in provinces:
@@ -170,13 +298,17 @@ func _advance_day() -> void:
 
 func _refresh_campaign_hud() -> void:
 	if date_label:
-		date_label.text = "Tarih: %s" % str(SaveManager.campaign.get("date", ""))
+		date_label.text = "Tarih: %s  |  %s / %s" % [str(SaveManager.campaign.get("date", "")), str(SaveManager.campaign.get("realm", "")), str(SaveManager.campaign.get("ruler", ""))]
 	if treasury_label:
 		treasury_label.text = "   Hazine: %s altın" % str(SaveManager.campaign.get("treasury", 0))
 
 func _save_game() -> void:
 	if SaveManager.save_campaign():
 		date_label.text = "Kayıt başarılı — %s" % str(SaveManager.campaign.get("date", ""))
+
+func _open_battlefield() -> void:
+	SaveManager.save_campaign()
+	get_tree().change_scene_to_file("res://scenes/battlefield.tscn")
 
 func open_ambassador_dialogue(name: String, opening: String, options: Array[String]) -> void:
 	dialogue_title.text = name
@@ -201,4 +333,5 @@ func _on_diplomatic_choice(option: String) -> void:
 			dialogue_text.text = "Elçi: Ortak düşmanlarımıza karşı ittifak şartları müzakere edilebilir."
 		_:
 			(dialogue_layer.get_meta("panel") as Control).visible = false
-			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+			if not is_mobile:
+				Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
