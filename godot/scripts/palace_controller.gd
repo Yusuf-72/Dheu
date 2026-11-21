@@ -19,6 +19,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		rotate_y(-event.relative.x * mouse_sensitivity)
 		pitch = clampf(pitch - event.relative.y * mouse_sensitivity, -1.35, 1.35)
 		head.rotation.x = pitch
+	if event is InputEventScreenDrag:
+		var viewport_size := get_viewport().get_visible_rect().size
+		if event.position.x > viewport_size.x * 0.42 and event.position.y < viewport_size.y * 0.72:
+			rotate_y(-event.relative.x * mouse_sensitivity * 1.8)
+			pitch = clampf(pitch - event.relative.y * mouse_sensitivity * 1.8, -1.35, 1.35)
+			head.rotation.x = pitch
 	if event.is_action_pressed("ui_cancel") and not OS.has_feature("mobile"):
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if event is InputEventMouseButton and event.pressed and Input.mouse_mode == Input.MOUSE_MODE_VISIBLE and not OS.has_feature("mobile"):
