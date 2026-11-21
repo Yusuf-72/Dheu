@@ -11,8 +11,9 @@ albedo_color = Color(0.72, 0.52, 0.19, 1)
 metallic = 0.55
 roughness = 0.32
 
-[sub_resource type="BoxShape3D" id="RoomCollision"]
-size = Vector3(22, 0.5, 22)
+[sub_resource type="CapsuleShape3D" id="PlayerCapsule"]
+radius = 0.38
+height = 1.8
 
 [node name="Palace" type="Node3D"]
 
@@ -27,11 +28,13 @@ shadow_enabled = true
 
 [node name="Floor" type="CSGBox3D" parent="Room"]
 size = Vector3(22, 0.5, 22)
+use_collision = true
 position = Vector3(0, -0.25, 0)
 material = SubResource("Stone")
 
 [node name="NorthWall" type="CSGBox3D" parent="Room"]
 size = Vector3(22, 7, 0.5)
+use_collision = true
 position = Vector3(0, 3.25, -11)
 material = SubResource("Stone")
 
@@ -42,6 +45,7 @@ material = SubResource("Stone")
 
 [node name="WestWall" type="CSGBox3D" parent="Room"]
 size = Vector3(0.5, 7, 22)
+use_collision = true
 position = Vector3(-11, 3.25, 0)
 material = SubResource("Stone")
 
@@ -66,7 +70,7 @@ script = ExtResource("1")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
 position = Vector3(0, 0.9, 0)
-shape = SubResource("RoomCollision")
+shape = SubResource("PlayerCapsule")
 
 [node name="Head" type="Node3D" parent="Player"]
 position = Vector3(0, 1.55, 0)
