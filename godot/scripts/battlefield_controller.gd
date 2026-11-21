@@ -1,10 +1,12 @@
 extends Node3D
 
 var commander: BattleCommander
-var units: Array[Node3D] = []
+var friendly_units: Array[Node3D] = []
+var enemy_units: Array[Node3D] = []
 var selected_index := 0
 var status_label: Label
 var unit_scene: PackedScene
+var combat_clock := 0.0
 
 func _ready() -> void:
 	unit_scene = load("res://scenes/battle_unit.tscn")
@@ -21,7 +23,7 @@ func _spawn_armies() -> void:
 		unit.name = "Yeniçeri %d" % (i + 1)
 		unit.position = Vector3(-5.0 + i * 5.0, 0.1, 5.0)
 		add_child(unit)
-		units.append(unit)
+		friendly_units.append(unit)
 		var mesh := unit.get_node("Visual") as MeshInstance3D
 		var material := StandardMaterial3D.new()
 		material.albedo_color = Color("#b68a45")
@@ -31,18 +33,51 @@ func _spawn_armies() -> void:
 		enemy.name = "Düşman %d" % (i + 1)
 		enemy.position = Vector3(-5.0 + i * 5.0, 0.1, -7.0)
 		add_child(enemy)
-		units.append(enemy)
+		enemy_units.append(enemy)
 		var mesh := enemy.get_node("Visual") as MeshInstance3D
 		var material := StandardMaterial3D.new()
 		material.albedo_color = Color("#8b4242")
 		mesh.material_override = material
+		enemy.receive_order(BattleCommander.Order.ADVANCE, Vector3(0, 0, 3), BattleCommander.Formation.LINE)
+
+func _physics_process(delta: float) -> void:
+	combat_clock += delta
+	if combat_clock < 1.5:
+		return
+	combat_clock = 0.0
+	for enemy in enemy_units:
+		if not is_instance_valid(enemy):
+			continue
+		var target: Node3D
+		var nearest := 99999.0
+		for ally in friendly_units:
+			if is_instance_valid(ally):
+				var distance := enemy.global_position.distance_to(ally.global_position)
+				if distance < nearest:
+					nearest = distance
+					target = ally
+		if target and nearest < 2.2:
+			target.apply_losses(3)
+			enemy.apply_losses(2)
+	var alive_friends := 0
+	var alive_enemies := 0
+	for unit in friendly_units:
+		if is_instance_valid(unit):
+			alive_friends += 1
+	for unit in enemy_units:
+		if is_instance_valid(unit):
+			alive_enemies += 1
+	if alive_enemies == 0:
+		_set_status("Zafer! Düşman kuvvetleri dağıtıldı.")
+	elif alive_friends == 0:
+		_set_status("Yenilgi. Ordun dağıldı.")
 
 func _build_battle_hud() -> void:
 	var hud := CanvasLayer.new()
 	add_child(hud)
 	var panel := PanelContainer.new()
 	panel.position = Vector2(20, 20)
-	panel.size = Vector2(500, 250)
+	panel.size = Vector2(510, 270)
 	hud.add_child(panel)
 	var layout := VBoxContainer.new()
 	panel.add_child(layout)
@@ -51,7 +86,7 @@ func _build_battle_hud() -> void:
 	title.add_theme_font_size_override("font_size", 20)
 	layout.add_child(title)
 	status_label = Label.new()
-	status_label.text = "Birlik seç ve emir ver."
+	status_label.text = "Birlik seç ve emir ver. Altın birlikler senin, kızıllar düşman."
 	layout.add_child(status_label)
 	var selection := HBoxContainer.new()
 	layout.add_child(selection)
@@ -84,11 +119,11 @@ func _add_command_button(parent: Control, caption: String, callback: Callable) -
 	parent.add_child(button)
 
 func _select_unit(index: int) -> void:
-	if index < 0 or index >= 3:
+	if index < 0 or index >= friendly_units.size():
 		return
 	selected_index = index
-	commander.select_unit(units[index])
-	_set_status("Seçili birlik: Yeniçeri %d — mevcut kuvvet: %d" % [index + 1, units[index].strength])
+	commander.select_unit(friendly_units[index])
+	_set_status("Seçili birlik: Yeniçeri %d — mevcut kuvvet: %d" % [index + 1, friendly_units[index].strength])
 
 func _set_status(message: String) -> void:
 	if is_instance_valid(status_label):
